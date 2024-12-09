@@ -8,7 +8,8 @@ import (
 	"github.com/fatih/color"
 )
 
-func parse(flags []string) {
+func parse(flags []string) string {
+	var ret string = ""
 	switch flags[0] {
 	case "ls":
 		mlt := false
@@ -21,17 +22,18 @@ func parse(flags []string) {
 
 		for i, arg := range flags[1:] {
 			if arg == "&&" {
-				parse(flags[i:])
+				ret += parse(flags[i + 1:])
+				return ret
 			}
 			files, err := os.ReadDir(arg)
 			if err != nil {
 				log.Fatal(err)
 			}
 			if mlt && i > 0 {
-				fmt.Println()
+				ret += "\n"
 			}
 			if mlt {
-				fmt.Println(flags[i + 1] + ":")
+				ret += fmt.Sprintln(flags[i + 1] + ":")
 			}
 			for _, file := range files {
 				n := file.Name()
@@ -46,13 +48,13 @@ func parse(flags []string) {
 					switch file.IsDir() {
 					case true:
 						d := color.New(color.FgBlue, color.Bold)
-						d.Print(n + s)
+						ret += d.Sprint(n + s)
 					default:
-						fmt.Print(n + s)
+						ret += fmt.Sprint(n + s)
 					}
 				}
 			}
-			fmt.Println()
+			ret += "\n"
 		}
 
 	case "rm":
@@ -61,7 +63,8 @@ func parse(flags []string) {
 		}
 		for i, path := range flags[1:] {
 			if path == "&&" {
-				parse(flags[i:])
+				ret += parse(flags[i + 1:])
+				return ret
 			}
 			info, err := os.Stat(path)
 			if err != nil {
@@ -80,10 +83,15 @@ func parse(flags []string) {
 		}
 
 	case "pwd":
+		if len(flags) > 1 && flags[1] == "&&" {
+			ret += parse(flags[2:])
+		}
+
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(wd)
+		ret = wd + ret + "\n"
 	}
+	return ret
 }
