@@ -67,6 +67,7 @@ func parse(flags []string) string {
 
 			if info.IsDir() {
 				fmt.Printf("Cannot remove '%s': Is a directory\n", path)
+				continue
 			} else {
 				err = os.Remove(path)
 				if err != nil {
@@ -80,7 +81,26 @@ func parse(flags []string) string {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ret += wd
+		ret += wd + "\n"
+	case "rmdir":
+		for _, flag := range flags[1:] {
+			info, err := os.Stat(flag)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if info.IsDir() {
+				dir, err := os.ReadDir(flag)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if len(dir) > 0 {
+					fmt.Printf("Cannot remove '%s': Not empty\n", flag)
+				} else {
+					os.RemoveAll(flag)
+				}
+			}
+		}
 	}
 	return ret
 }
